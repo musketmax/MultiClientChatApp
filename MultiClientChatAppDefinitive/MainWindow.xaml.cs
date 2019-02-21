@@ -68,7 +68,7 @@ namespace MultiClientChatAppDefinitive
                 AddMessage("Listening for clients..");
                 AddMessage("Type `exit` once a client has connected,");
                 AddMessage("or press the stop button at any time to disconnect.");
-                chatServer = new ChatServer(GetPort(), GetBufferSize(), (message) => AddMessage(message), () => ToggleServerActiveUI());
+                chatServer = new ChatServer(GetPort(), GetBufferSize(), (message) => AddMessage(message), () => ToggleServerActiveUI(), () => ToggleButtonsDisconnected());
                 chatServer.ListenForClients();
             }
             else
@@ -109,7 +109,8 @@ namespace MultiClientChatAppDefinitive
         /// <param name="e"></param>
         private void BtnStop_Click(object sender, RoutedEventArgs e)
         {
-            chatServer.CloseConnections();
+            chatServer.CloseConnections(true);
+            ToggleServerActiveUI();
         }
 
         /// <summary>
@@ -131,11 +132,11 @@ namespace MultiClientChatAppDefinitive
             if (!string.IsNullOrEmpty(txtMessage.Text))
             {
                 // decide whether to use client of server side, if both are false, display error message
-                if (chatServer != null)
+                if (chatServer != null && chatServer.isServerActive)
                 {
                     chatServer.SendMessage(txtMessage.Text);
                 }
-                else if (chatClient != null)
+                else if (chatClient != null && chatClient.isActive)
                 {
                     chatClient.SendMessage(txtMessage.Text);
                 }

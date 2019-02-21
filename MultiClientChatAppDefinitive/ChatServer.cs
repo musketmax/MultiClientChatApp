@@ -25,6 +25,7 @@ namespace MultiClientChatAppDefinitive
         // Actions to update UI
         private Action<string> AddMessage;
         private Action ToggleServerActiveUI;
+        private Action ToggleButtonsDisconnected;
 
         // Booleans to indicate status
         public bool isServerActive { get; set; }
@@ -37,12 +38,13 @@ namespace MultiClientChatAppDefinitive
         /// <param name="BUFFER_SIZE"></param>
         /// <param name="AddMessage"></param>
         /// <param name="ToggleServerActiveUI"></param>
-        public ChatServer(int PORT, int BUFFER_SIZE, Action<string> AddMessage, Action ToggleServerActiveUI)
+        public ChatServer(int PORT, int BUFFER_SIZE, Action<string> AddMessage, Action ToggleServerActiveUI, Action ToggleButtonsDisconnected)
         {
             this.PORT = PORT;
             this.BUFFER_SIZE = BUFFER_SIZE;
             this.AddMessage = AddMessage;
             this.ToggleServerActiveUI = ToggleServerActiveUI;
+            this.ToggleButtonsDisconnected = ToggleButtonsDisconnected;
 
             isServerActive = false;
             clients = new List<ChatClient>();
@@ -157,19 +159,21 @@ namespace MultiClientChatAppDefinitive
 
                     // If this client was the last one standing and we were in the process of disconnecting, we can safely disconnect everyone.
                     if (clients.Count < 1 && disconnecting)
-                        CloseConnections();
+                        CloseConnections(false);
                 }
                 catch
                 {
                     // If this code executes, the client has force disconnected and we should close the connection immediately.
-                    ChatClient clientToRemove = clients.First(c => c == chatClient);
-                    clients.Remove(clientToRemove);
+                    ChatClient clientToRemove = clients.FirstOrDefault(c => c == chatClient);
+                    if (clientToRemove != null)
+                        clients.Remove(clientToRemove);
+
                     CloseConnectionToClient(chatClient);
                     SendMessageToAllClients($"{chatClient.Username} disconnected unexpectedly!", chatClient);
 
                     // If we were disconnecting, close up everything
                     if (clients.Count < 1 && disconnecting)
-                        CloseConnections();
+                        CloseConnections(false);
                 }
             }
         }
@@ -243,18 +247,20 @@ namespace MultiClientChatAppDefinitive
         /// <summary>
         /// Close all our connections and give up our listener. We want to fully cleanup, so everything is thrown away.
         /// </summary>
-        public void CloseConnections()
+        public void CloseConnections(bool fromMain)
         {
             // Update our statuses, send message to all our clients to say goodbye, toggle UI and destroy listener. Clients are wiped also.
             isServerActive = false;
             disconnecting = false;
             SendMessage("exit");
-            ToggleServerActiveUI();
             AddMessage("You have disconnected succesfully.");
 
             Listener.Stop();
-            Listener = null;
             clients = new List<ChatClient>();
+
+            // If this method has not been called from the MainWindow, we should update the UI ourselves
+            if (!fromMain)
+                ToggleButtonsDisconnected();
         }
     }
 }

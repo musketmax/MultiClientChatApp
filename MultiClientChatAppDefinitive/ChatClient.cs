@@ -28,6 +28,7 @@ namespace MultiClientChatAppDefinitive
 
         // Boolean for checking the status of the client and programme
         public bool isActive { get; set; }
+        public bool disconnecting { get; set; }
 
         // Actions for updating buttons and UI outside of this class
         private Action<string> AddMessage;
@@ -50,6 +51,7 @@ namespace MultiClientChatAppDefinitive
             PORT = 8000;
             BUFFER_SIZE = 1024;
             isActive = false;
+            disconnecting = false;
         }
 
         /// <summary>
@@ -139,15 +141,21 @@ namespace MultiClientChatAppDefinitive
                         if (!string.IsNullOrEmpty(receivedMessage))
                             AddMessage(receivedMessage);
                     }
+                    // Close the connection, if not already disconnecting, and update status
+                    if (!disconnecting) 
+                        CloseConnectionToServer();
 
-                    // Close the connection and update status
-                    CloseConnectionToServer();
                     isActive = false;
                 }
                 catch
                 {
-                    AddMessage("Server disconnected unexpectedly!");
-                    CloseConnectionToServer();
+                    // if not already disconnecting, server closed the connection.
+                    if (!disconnecting)
+                    {
+                        AddMessage("Server disconnected unexpectedly!");
+                        CloseConnectionToServer();
+                    }
+
                     isActive = false;
                 }
             }
@@ -178,9 +186,15 @@ namespace MultiClientChatAppDefinitive
             
             // if we write exit, we want to close connections.
             if (message == "exit")
+            {
+                disconnecting = true;
                 CloseConnectionToServer();
-
-            AddMessage("You: " + message);
+                disconnecting = false;
+            }
+            else
+            {
+                AddMessage("You: " + message);
+            }
         }
 
         /// <summary>
