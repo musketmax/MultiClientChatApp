@@ -151,7 +151,7 @@ namespace MultiClientChatAppDefinitive
                     }
 
                     // If out of loop, client is no longer with us (RIP), so we remove him from the list and close connections.
-                    ChatClient clientToRemove = clients.First(c => c.ID == chatClient.ID);
+                    ChatClient clientToRemove = clients.First(c => c == chatClient);
                     clients.Remove(clientToRemove);
                     CloseConnectionToClient(chatClient);
 
@@ -162,7 +162,7 @@ namespace MultiClientChatAppDefinitive
                 catch
                 {
                     // If this code executes, the client has force disconnected and we should close the connection immediately.
-                    ChatClient clientToRemove = clients.First(c => c.ID == chatClient.ID);
+                    ChatClient clientToRemove = clients.First(c => c == chatClient);
                     clients.Remove(clientToRemove);
                     CloseConnectionToClient(chatClient);
                     SendMessageToAllClients($"{chatClient.Username} disconnected unexpectedly!", chatClient);
