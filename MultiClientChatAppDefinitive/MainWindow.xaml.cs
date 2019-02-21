@@ -300,7 +300,10 @@ namespace MultiClientChatAppDefinitive
             // Init new Regex to check matching input
             Regex Port = new Regex(@"^[0-9]*$");
             // If no match, input is invalid, also update validity
-            if (!Port.IsMatch(PortTextBox.Text) || string.IsNullOrEmpty(PortTextBox.Text))
+            if (!Port.IsMatch(PortTextBox.Text) 
+                || string.IsNullOrEmpty(PortTextBox.Text)
+                || int.Parse(PortTextBox.Text) > 65535
+                || int.Parse(PortTextBox.Text) < 1)
             {
                 PortTextBox.BorderBrush = Brushes.Red;
                 isValidPort = false;
